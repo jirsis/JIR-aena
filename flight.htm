@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!-- saved from url=(0100)file:///Users/Ignacio.Reta/Documents/proyectos/kurier/backup/MagicMirror/modules/JIR-aena/fligth.htm -->
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Flight Tracker | Flightradar24 | Track Planes In Real-Time</title>
+    <link href="./flight_files/screen_new.css" rel="stylesheet" type="text/css">
+    <link href="./flight_files/important-banner.css" media="screen" rel="stylesheet" type="text/css">
+</head>
+
+<body id="map" class="desktop news-feed blog-feed show-left-overlay ng-scope" data-ng-app="fr24App" style="opacity: 1; visibility: visible; animation: none 0s ease 0s 1 normal none running;">
+    <div id="mapStaticOverlays">
+        <div id="leftColOverlay" class="foldable" style="display: block; height: auto; top: 0px;">
+            <div class="aircraftSummary">
+                <div id="overlayFlightDetails" class="overlayFlightDetails">
+                    <div class="routeInformationBox" id="routeInformationBox">
+                        <aside>
+                            <div class="airport origin">
+                                <a class="iata hasTooltip" id="airport-origin-link" data-tooltip-maxwidth="14em" data-iata="CDG" >CDG</a>
+                                <div class="cnt-city">
+                                    <p class="city" id="airport-origin-city">París</p>
+                                </div>
+                                <p class="timezone hasTooltip" id="airport-origin-timezone" data-tooltip-value="">+03 (UTC +03:00)</p>
+                            </div>
+                            <div class="direction">SALIDA</div>
+                            <div class="time" id="stdWrapper" >
+                                <span class="group">PREVISTO</span> 
+                                <span class="group">
+                                    <span class="statusVal" id="stdVal">
+                                        <span class="status"></span>
+                                        08:20
+                                    </span> 
+                                    <span class="ampm"></span>
+                                </span>
+                            </div>
+                            <div class="time" id="atdWrapper" >
+                                <span class="group">ACTUAL</span> 
+                                <span class="group">
+                                    <span class="statusVal" id="atdVal">
+                                        <span class="status"></span>
+                                        08:33
+                                    </span> 
+                                    <span class="ampm"></span>
+                                </span>
+                            </div>
+                        </aside>
+                        <aside>
+                            <div class="airport destination">
+                                <a class="iata hasTooltip" id="airport-destination-link" data-tooltip-maxwidth="14em" data-iata="MAD" >MAD</a>
+                                <div class="cnt-city">
+                                    <p class="city" id="airport-destination-city">Madrid</p>
+                                </div>
+                                <p class="timezone hasTooltip" id="airport-destination-timezone" >EST (UTC -05:00)</p>
+                            </div>
+                            <div class="direction">LLEGADA</div>
+                            <div class="time" id="staWrapper" >
+                                <span class="group">PREVISTO</span>
+                                <span class="group">
+                                        <span class="statusVal" id="stdVal">
+                                            <span class="status"></span>
+                                            08:20
+                                        </span> 
+                                    <span class="ampm"></span>
+                                </span>
+                            </div>
+                            <div class="time" id="etaWrapper" >
+                                <span class="group">ESTIMADO</span> 
+                                <span class="group">
+                                    <span class="statusVal" id="etaVal">
+                                        <span class="status green"></span>
+                                        14:23
+                                    </span>
+                                    <span class="ampm"></span></span></div>
+                        </aside>
+                        <div class="flight-phase"><svg id="aircraftStatusIcon" class="icon icon-fr24-flight-status hasTooltip airborne"
+                                data-tooltip-value="Airborne">
+                                <use xlink:href="#icon-fr24-aircraft-big"></use>
+                            </svg></div>
+                        <div class="progress">
+                            <p style="display: block;">tiempo total de vuelo: <span id="distanceVal">3h 45m</span></p>
+                            <div class="route-stage">
+                                <!-- <div class="passed">
+                                    <div id="distanceCovered" style="display: block;">4,793 km</div>
+                                    <div id="timeElapsed" style="display: block;">05:51 ago</div>
+                                </div> -->
+                                <div class="progressBar" style="display: block;">
+                                    <div class="progress" style="width: 42%;"></div>
+                                    <div class="icon-progress" style="margin-left: 29%;">
+                                        <svg class="icon-fr24-aircraft-big">
+                                            <use xlink:href="#icon-fr24-aircraft-big"></use>
+                                        </svg></div>
+                                </div>
+                                <!-- <div class="remained">
+                                    <div id="distanceRemaining" style="display: block;">6,446 km</div>
+                                    <div id="timeRemaining" style="display: block;">in 07:58</div>
+                                </div> -->
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html> 
