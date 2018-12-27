@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/jirsis/JIR-aena#readme",
   "dependencies": {
-    "flightradar24-client": "^0.3.0",
     "momentjs": "^2.0.0",
     "request-debug": "^0.2.0",
     "request-promise": "^4.2.2"

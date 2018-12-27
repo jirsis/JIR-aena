@@ -1,12 +1,11 @@
 const request = require('request-promise');
-const flightRadar = require('flightradar24-client/lib/flight');
 const moment = require('moment');
 //require('request-debug')(request);
 
 const flights = {
     findFlightsUrl: 'https://www.flightradar24.com/v1/search/web/find', 
     countriesUrl: 'https://restcountries.eu/rest/v2/alpha/',
-    detailsFlightUrl: 'https://www.flightradar24.com/{flightCode}/{fr24id}',
+    detailsFlightUrl: 'https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={fr24id}',
 
     find: function(idFlight){
         return request.get({
@@ -20,70 +19,109 @@ const flights = {
 
     detail: function(response){
         var body = JSON.parse(response);
-        return flightRadar(body.results[0].id.toString());
+        const id = body.results[0].id;
+        const detailUrl = flights.detailsFlightUrl.replace('{fr24id}', id);
+        return request.get({url: detailUrl});
     },
 
-    magicMirrorDetail: function(flightDetail){
-        const start = moment(flightDetail.departure);
-        const end = moment(flightDetail.arrival);
-        const total = moment.duration(end.diff(start));
-        console.log(flightDetail);
+    magicMirrorDetail: function(response){
+        const detail = JSON.parse(response);
+
+        const total = flights.getTotalTime(detail.time);
+        const start = flights.getTime(detail.time.scheduled.departure, detail.time.estimated.departure, detail.time.real.departure);
+        const durationFlight = moment.duration(total, 'seconds');
+
         return {
-            flight: flightDetail.callsign,
+            flight: detail.identification.number.default+'/'+detail.identification.callsign,
             departure: {
-                airport: flightDetail.origin.id,
-                name: flightDetail.origin.name,
-                city: '',
-                country: flightDetail.origin.country,
-                timezone: flightDetail.origin.timezone,
-                scheduledTime: flightDetail.scheduledDeparture,
-                realTime: flightDetail.departure,
+                airport: detail.airport.origin.code.iata,
+                name: detail.airport.origin.name,
+                city: detail.airport.origin.position.region.city,
+                country: detail.airport.origin.position.country.name,                
+                timezone: {
+                    abbr: detail.airport.origin.timezone.abbr,
+                    hours: detail.airport.origin.timezone.offsetHours,
+                    name: detail.airport.origin.timezone.name,
+                },
+                time: {
+                    scheduled: detail.time.scheduled.departure,
+                    estimated: detail.time.estimated.departure,
+                    real: detail.time.real.departure,
+                },
             },
             arrival: {
-                airport: flightDetail.destination.id,
-                name: flightDetail.destination.name,
-                city: '',
-                country: flightDetail.destination.country,
-                timezone: flightDetail.destination.timezone,
-                scheduledTime: flightDetail.scheduledArrival,
-                realTime: flightDetail.arrival,
+                airport: detail.airport.destination.code.iata,
+                name: detail.airport.destination.name,
+                city: detail.airport.destination.position.region.city,
+                country: detail.airport.destination.position.country.name,
+                timezone: {
+                    abbr: detail.airport.destination.timezone.abbr,
+                    hours: detail.airport.destination.timezone.offsetHours,
+                    name: detail.airport.destination.timezone.name,
+                },
+                time: {
+                    scheduled: detail.time.scheduled.arrival,
+                    estimated: detail.time.estimated.arrival,
+                    real: detail.time.real.arrival,
+                },
             },
-            duration: [total.get('hours').toString().padStart(2, '0'), total.get('minutes')].join(':'),
+            duration: {
+                total: [
+                    durationFlight.get('hours').toString().padStart(2, '0'), 
+                    durationFlight.get('minutes').toString().padStart(2, '0'),
+                ].join(':'),
+                progress: flights.getProgress(start, total, detail.trail[0].ts),
+            }
         }
     },
 
-    fillDeparture: function(detail){
-        return request.get({
-            url: flights.countriesUrl+detail.departure.country
-        }).then(function(countryResponse){
-            const country = JSON.parse(countryResponse);
-            detail.departure.country = country.translations.es;            
-            return detail;
-        })
+    getTime: function(scheduled, estimated, real, tz){
+        let time = 0;
+        if(real !== null){
+            time = real;
+        } else if (estimated !== null ){
+            time = estimated;
+        } else {
+            time = scheduled;
+        }
+        return time;
     },
 
-    fillArrival: function(detail){
-        return request.get({
-            url: flights.countriesUrl+detail.arrival.country
-        }).then(function(countryResponse){
-            const country = JSON.parse(countryResponse);
-            detail.arrival.country = country.translations.es;            
-            return detail;
-        })
+    getTotalTime: function(time){
+        const start = flights.getTime(
+            time.scheduled.departure, 
+            time.estimated.departure, 
+            time.real.departure
+            );
+    
+        const end = flights.getTime(
+            time.scheduled.arrival, 
+            time.estimated.arrival, 
+            time.real.arrival,
+            );
+        return end-start;
     },
 
+    getProgress: function(start, total, current){
+        // console.log("start: "+start);
+        // console.log("total: "+total);
+        // console.log("current: "+ current);
+        const progress =  (current-start)*100/total;
+        // console.log("progress: "+progress);
+        return progress;
+    }
+
+    
 };
 
 function main(codeFlight){
     return flights
         .find(codeFlight)
         .then(flights.detail)
-        .then(flights.magicMirrorDetail)
-        .then(flights.fillDeparture)
-        .then(flights.fillArrival);
+        .then(flights.magicMirrorDetail);
 
 };
 
-main('TAP029').then(function(flightDetail){
+main('AF179').then(function(flightDetail){
     console.log(flightDetail);
 });
