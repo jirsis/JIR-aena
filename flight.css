@@ -1,26 +1,32 @@
-.flight td img{
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+.align-center {
+    text-align: center;
 }
 
-.flight .icon-left {
-    padding-left: 0;
-    padding-right: 15px;
-    text-align: right;
-  }
-
-.flight .icon-right {
-    padding-right: 0;
-    padding-left: 15px;
-    text-align: left;
-  }
-
-.flight .small-caps span {
-    font-variant: small-caps;
+progress[value] {
+    -webkit-appearance: none;
+    width: 350px;
+    height: 5px;
 }
 
-.flight .fixed p td{
-    max-width: 250px;
+progress[value]::-webkit-progress-bar {
+    background-color:lightgreen;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
 }
-  
+
+progress[value]::-webkit-progress-value {
+    background-color: black;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+
+div.plane {
+    height: 0px;
+    top: 16px;
+    position: relative;
+    color: white;
+}
+
+td.duration {
+    height: 55px;
+}

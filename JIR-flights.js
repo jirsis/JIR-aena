@@ -45,42 +45,42 @@ Module.register('JIR-flights', {
     getDom: function() {
 
         this.flight = {
-            "flight": "AF1100/AFR110K",
+            "flight": "AF1100/AFR110K", //√
             "departure": {
-              "airport": "CDG",
+              "airport": "CDG", //√ 
               "name": "Paris Charles de Gaulle Airport",
               "city": "Paris",
               "country": "France",
-              "timezone": {
+              "timezone": { //?
                 "abbr": "CET",
                 "hours": "+1:00",
                 "name": "Europe/Paris"
               },
-              "time": {
+              "time": { // ?
                 "scheduled": 1545927000,
                 "estimated": null,
                 "real": 1545927782
               }
             },
             "arrival": {
-              "airport": "MAD",
+              "airport": "MAD", // √
               "name": "Madrid Barajas Airport",
               "city": "Madrid",
               "country": "Spain",
-              "timezone": {
+              "timezone": { //?
                 "abbr": "CET",
                 "hours": "+1:00",
                 "name": "Europe/Madrid"
               },
-              "time": {
+              "time": { //?
                 "scheduled": 1545934500,
                 "estimated": 1545934058,
                 "real": null
               }
             },
             "duration": {
-              "total": "01:44",
-              "progress": 15.296367112810707
+              "total": "01h 44m", //√ 
+              "progress": 37 //√ 
             }
         };
 
@@ -98,33 +98,72 @@ Module.register('JIR-flights', {
 
         let flightTable = document.createElement('table');
 
+        let fligthRow = document.createElement('tr');
+        let flightCode = document.createElement('td');
+        flightCode.className='align-center medium';
+        flightCode.colSpan=2;
+        flightCode.innerHTML=`${this.flight.flight}`;
+        fligthRow.appendChild(flightCode);
+
+
         let airportsRow = document.createElement('tr');
         let airportDeparture = document.createElement('td');
-        airportDeparture.innerHTML='CDG';
+        airportDeparture.className='bright large strong align-left';
+        airportDeparture.innerHTML=`${this.flight.departure.airport}`;
+
         let airportArrival = document.createElement('td');
-        airportArrival.innerHTML='MAD';
+        airportArrival.className='bright large strong align-right';
+        airportArrival.innerHTML=`${this.flight.arrival.airport}`;
+        
         airportsRow.appendChild(airportDeparture);
         airportsRow.appendChild(airportArrival);
 
         let timesRow = document.createElement('tr');
         let timeDeparture = document.createElement('td');
-        timeDeparture.innerHTML = 'hh:mm';
+        let departureIcon = document.createElement('i');
+        departureIcon.className='fas fa-plane-departure';
+        timeDeparture.className='align-left';
+        timeDeparture.appendChild(departureIcon);
+        timeDeparture.append(' hh:mm');
+        
+        
         let timeArrival = document.createElement('td');
-        timeArrival.innerHTML = 'hh:mm';
-        timeRow.appendChild(timeDeparture);
-        timeRow.appendChild(timeArrival);
+        let arrivalIcon = document.createElement('i');
+        arrivalIcon.className='fas fa-plane-arrival';
+        timeArrival.className='align-right';
+        timeArrival.append('hh:mm ');
+        timeArrival.appendChild(arrivalIcon);
+
+        timesRow.appendChild(timeDeparture);
+        timesRow.appendChild(timeArrival);
 
         let progressRow = document.createElement('tr');
-        let progress = document.createElement('td');
-        progress.innerHTML='20%';
-        progressRow.appendChild(progress);
+        let progressCell = document.createElement('td');
+        progressCell.className='align-center';
+        progressCell.colSpan=2;
+        let progress = document.createElement('progress');
+        let plane = document.createElement('div');
+        plane.className='plane';
+        plane.style=`width:${this.flight.duration.progress*2}%`;
+        let planeIcon = document.createElement('i');
+        planeIcon.className='fas fa-plane plane';
+        plane.appendChild(planeIcon);
+
+        progress.setAttribute('max', '100');
+        progress.setAttribute('value', `${this.flight.duration.progress}`);
+        progressCell.appendChild(plane);
+        progressCell.appendChild(progress);
+        progressRow.appendChild(progressCell);
 
         let etaRow = document.createElement('tr');
         let eta = document.createElement('td');
-        eta.innerHTML='duración estimada hh:mm'
+        eta.className='small align-center duration';
+        eta.colSpan = 2;
+        eta.innerHTML=`tiempo total de vuelo: ${this.flight.duration.total}`;
         etaRow.appendChild(eta);
 
-        flightTable.appendChild(airportRow);
+        flightTable.appendChild(fligthRow);
+        flightTable.appendChild(airportsRow);
         flightTable.appendChild(timesRow);
         flightTable.appendChild(progressRow);
         flightTable.appendChild(etaRow);
