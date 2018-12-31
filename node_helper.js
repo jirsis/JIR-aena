@@ -1,6 +1,7 @@
 const NodeHelper = require('node_helper');
 const request = require('request-promise');
 const moment = require('moment');
+const timezone = require('moment-timezone');
 //require('request-debug')(request);
 
 
@@ -36,53 +37,32 @@ const flights = {
 
         const total = flights.getTotalTime(detail.time);
         const start = flights.getTime(detail.time.scheduled.departure, detail.time.estimated.departure, detail.time.real.departure);
+        const end = flights.getTime(detail.time.scheduled.arrival, detail.time.estimated.arrival, detail.time.real.arrival);
         const durationFlight = moment.duration(total, 'seconds');
+        const localOffset = moment().tz(moment.tz.guess()).utcOffset();
+        let departedTime = moment(start*1000).add(detail.airport.origin.timezone.offset, 's').subtract(localOffset, 'm').format('HH:mm');
+        let arrivalTime = moment(end*1000).add(detail.airport.destination.timezone.offset, 's').subtract(localOffset, 'm').format('HH:mm');
 
-        return {
+        const detailJson = {
             flight: detail.identification.number.default+'/'+detail.identification.callsign,
             departure: {
                 airport: detail.airport.origin.code.iata,
-                name: detail.airport.origin.name,
-                city: detail.airport.origin.position.region.city,
-                country: detail.airport.origin.position.country.name,                
-                timezone: {
-                    abbr: detail.airport.origin.timezone.abbr,
-                    hours: detail.airport.origin.timezone.offsetHours,
-                    name: detail.airport.origin.timezone.name,
-                },
-                time: {
-                    scheduled: detail.time.scheduled.departure,
-                    estimated: detail.time.estimated.departure,
-                    real: detail.time.real.departure,
-                },
+                time: departedTime,
             },
             arrival: {
                 airport: detail.airport.destination.code.iata,
-                name: detail.airport.destination.name,
-                city: detail.airport.destination.position.region.city,
-                country: detail.airport.destination.position.country.name,
-                timezone: {
-                    abbr: detail.airport.destination.timezone.abbr,
-                    hours: detail.airport.destination.timezone.offsetHours,
-                    name: detail.airport.destination.timezone.name,
-                },
-                time: {
-                    scheduled: detail.time.scheduled.arrival,
-                    estimated: detail.time.estimated.arrival,
-                    real: detail.time.real.arrival,
-                },
+                time: arrivalTime,
             },
             duration: {
-                total: [
-                    durationFlight.get('hours').toString().padStart(2, '0'), 
-                    durationFlight.get('minutes').toString().padStart(2, '0'),
-                ].join(':'),
+                total: `${durationFlight.get('hours').toString().padStart(2, '0')}h ${durationFlight.get('minutes').toString().padStart(2, '0')}m`,
                 progress: flights.getProgress(start, total, detail.trail[0].ts),
             }
         }
+        console.log(JSON.stringify(detailJson, null, 2));
+        return detailJson;
     },
 
-    getTime: function(scheduled, estimated, real, tz){
+    getTime: function(scheduled, estimated, real){
         let time = 0;
         if(real !== null){
             time = real;
@@ -139,6 +119,9 @@ module.exports = NodeHelper.create({
 
     start: function() {
         console.log(this.name + ' node_helper is started!');
+        console.log(moment.tz.guess());
+        console.log(moment().tz(moment.tz.guess()).utcOffset());
+        
     },
 
     updateFlightData: function(flight_config, node_helper){
@@ -150,6 +133,7 @@ module.exports = NodeHelper.create({
                     console.log('JIR-FLIGHTS updated: '+new Date());
                     flights.chain(flight_config.flightCode, node_helper)
                     .then(function(response){
+                        console.log(response);
                         node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
                     });
                 }, flight_config.updateInterval);

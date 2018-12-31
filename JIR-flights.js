@@ -32,11 +32,11 @@ Module.register('JIR-flights', {
         Log.log('Starting module: ' + this.name);
         this.socketNotificationReceived('JIR-FLIGHTS_STARTED', this.config);
         this.scheduleUpdate(this.config.initialLoadDelay);
-        this.loaded = true;
+        this.loaded = false;
     },
 
     processFlightInformation: function(flightData){
-        this.flight = flightData;
+        this.flight = JSON.parse(flightData);
         this.show(this.config.animationSpeed, {lockString:this.identifier});
         this.loaded=true;
         this.updateDom(this.config.animationSpeed);
@@ -44,49 +44,9 @@ Module.register('JIR-flights', {
 
     getDom: function() {
 
-        this.flight = {
-            "flight": "AF1100/AFR110K", //√
-            "departure": {
-              "airport": "CDG", //√ 
-              "name": "Paris Charles de Gaulle Airport",
-              "city": "Paris",
-              "country": "France",
-              "timezone": { //?
-                "abbr": "CET",
-                "hours": "+1:00",
-                "name": "Europe/Paris"
-              },
-              "time": { // ?
-                "scheduled": 1545927000,
-                "estimated": null,
-                "real": 1545927782
-              }
-            },
-            "arrival": {
-              "airport": "MAD", // √
-              "name": "Madrid Barajas Airport",
-              "city": "Madrid",
-              "country": "Spain",
-              "timezone": { //?
-                "abbr": "CET",
-                "hours": "+1:00",
-                "name": "Europe/Madrid"
-              },
-              "time": { //?
-                "scheduled": 1545934500,
-                "estimated": 1545934058,
-                "real": null
-              }
-            },
-            "duration": {
-              "total": "01h 44m", //√ 
-              "progress": 37 //√ 
-            }
-        };
-
         var wrapper = document.createElement('div');
         if (!this.loaded) {
-			return this.flightNotLoaded(wrapper);
+			return this.flightsNotLoaded(wrapper);
         }
 
         if(this.error){
@@ -124,14 +84,14 @@ Module.register('JIR-flights', {
         departureIcon.className='fas fa-plane-departure';
         timeDeparture.className='align-left';
         timeDeparture.appendChild(departureIcon);
-        timeDeparture.append(' hh:mm');
+        timeDeparture.append(` ${this.flight.departure.time}`);
         
         
         let timeArrival = document.createElement('td');
         let arrivalIcon = document.createElement('i');
         arrivalIcon.className='fas fa-plane-arrival';
         timeArrival.className='align-right';
-        timeArrival.append('hh:mm ');
+        timeArrival.append(`${this.flight.arrival.time} `);
         timeArrival.appendChild(arrivalIcon);
 
         timesRow.appendChild(timeDeparture);
@@ -184,7 +144,7 @@ Module.register('JIR-flights', {
 		var self = this;
 		setTimeout(function() {
             self.sendSocketNotification('JIR-FLIGHTS_STARTED', self.config);
-			self.updateFlight();
+			self.scheduleUpdate();
 		}, nextLoad);
 	},
 
@@ -199,7 +159,7 @@ Module.register('JIR-flights', {
             this.sendSocketNotification(notification, payload);
         } else if (notification === 'JIR_FLIGHTS_WAKE_UP') {
             Log.info("flight found it, must show module");
-            Log.info(payload);
+            //Log.info(payload);
             this.processFlightInformation(payload);
         }else if (notification === 'JIR_FLIGHTS_NOT_FOUND'){
             Log.info("not found, must hide module");
