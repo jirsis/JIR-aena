@@ -10,7 +10,9 @@ Module.register('JIR-flights', {
         animationSpeed: 2000,
 
         initialLoadDelay: 2500,
-        updateInterval: 60 * 60 * 1000, //every 1h 
+        updateInterval: 60*1000, //every 1m 
+
+        flightRegex: /\[(.*)\]/s,
 
     },
 
@@ -136,6 +138,17 @@ Module.register('JIR-flights', {
 		return wrapper;
     },
 
+    extractFlighCode: function(payload){
+        const self = this;
+        payload.forEach((event, id) => {
+            let match = this.config.flightRegex.exec(event.title);
+            if(match != null){
+                self.config.flightCode=match[1];
+                self.sendSocketNotification('JIR-FLIGHTS_STARTED', self.config);
+            }
+        });
+    },
+
     scheduleUpdate: function(delay) {
 		var nextLoad = this.config.updateInterval;
 		if (typeof delay !== 'undefined' && delay >= 0) {
@@ -150,7 +163,12 @@ Module.register('JIR-flights', {
 
     showError: function(errorDescription){
         this.error = errorDescription;
-       // Log.info(errorDescription);
+    },
+
+    notificationReceived: function(notification, payload, sender){
+        if (notification === 'CALENDAR_EVENTS'){
+            this.extractFlighCode(payload);
+        }
     },
 
     socketNotificationReceived: function (notification, payload) {
@@ -159,10 +177,9 @@ Module.register('JIR-flights', {
             this.sendSocketNotification(notification, payload);
         } else if (notification === 'JIR_FLIGHTS_WAKE_UP') {
             Log.info("flight found it, must show module");
-            //Log.info(payload);
             this.processFlightInformation(payload);
         }else if (notification === 'JIR_FLIGHTS_NOT_FOUND'){
             Log.info("not found, must hide module");
-        } 
+        }
     },
 });

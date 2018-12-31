@@ -58,7 +58,7 @@ const flights = {
                 progress: flights.getProgress(start, total, detail.trail[0].ts),
             }
         }
-        console.log(JSON.stringify(detailJson, null, 2));
+       // console.log(JSON.stringify(detailJson, null, 2));
         return detailJson;
     },
 
@@ -119,21 +119,17 @@ module.exports = NodeHelper.create({
 
     start: function() {
         console.log(this.name + ' node_helper is started!');
-        console.log(moment.tz.guess());
-        console.log(moment().tz(moment.tz.guess()).utcOffset());
-        
     },
 
     updateFlightData: function(flight_config, node_helper){
         console.log('JIR-FLIGHTS updated: '+new Date());
+        console.log(flight_config);
         flights.chain(flight_config.flightCode, node_helper)
             .then(function(response){
                 node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
                 setInterval(function update(){  
-                    console.log('JIR-FLIGHTS updated: '+new Date());
                     flights.chain(flight_config.flightCode, node_helper)
-                    .then(function(response){
-                        console.log(response);
+                    .then(function(response){                    
                         node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
                     });
                 }, flight_config.updateInterval);
@@ -142,6 +138,7 @@ module.exports = NodeHelper.create({
 
     socketNotificationReceived: function(notification, payload) {
         const flight_nodehelper = this;
+        console.log(payload);
         if ( notification === 'JIR-FLIGHTS_STARTED' ){
 
             setTimeout(this.updateFlightData, 
