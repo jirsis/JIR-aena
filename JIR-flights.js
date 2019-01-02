@@ -10,7 +10,7 @@ Module.register('JIR-flights', {
         animationSpeed: 2000,
 
         initialLoadDelay: 2500,
-        updateInterval: 60*1000, //every 1m 
+        updateInterval: 3*60*1000, //every 3m 
 
         flightRegex: /\[(.*)\]/s,
 
@@ -80,6 +80,18 @@ Module.register('JIR-flights', {
         airportsRow.appendChild(airportDeparture);
         airportsRow.appendChild(airportArrival);
 
+        let citiesRow = document.createElement('tr');
+        let cityDeparture = document.createElement('td');
+        cityDeparture.className='small align-left';
+        cityDeparture.innerHTML=`${this.flight.departure.city}`;
+
+        let cityArrival = document.createElement('td');
+        cityArrival.className='small align-right';
+        cityArrival.innerHTML=`${this.flight.arrival.city}`;    
+
+        citiesRow.appendChild(cityDeparture);
+        citiesRow.appendChild(cityArrival);
+
         let timesRow = document.createElement('tr');
         let timeDeparture = document.createElement('td');
         let departureIcon = document.createElement('i');
@@ -126,6 +138,7 @@ Module.register('JIR-flights', {
 
         flightTable.appendChild(fligthRow);
         flightTable.appendChild(airportsRow);
+        flightTable.appendChild(citiesRow);
         flightTable.appendChild(timesRow);
         flightTable.appendChild(progressRow);
         flightTable.appendChild(etaRow);
@@ -143,6 +156,7 @@ Module.register('JIR-flights', {
         payload.forEach((event, id) => {
             let match = this.config.flightRegex.exec(event.title);
             if(match != null){
+                Log.info(`${self.name}: ${match[1]}`);
                 self.config.flightCode=match[1];
                 self.sendSocketNotification('JIR-FLIGHTS_STARTED', self.config);
             }

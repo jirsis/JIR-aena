@@ -47,10 +47,12 @@ const flights = {
             flight: detail.identification.number.default+'/'+detail.identification.callsign,
             departure: {
                 airport: detail.airport.origin.code.iata,
+                city: detail.airport.origin.position.region.city,
                 time: departedTime,
             },
             arrival: {
                 airport: detail.airport.destination.code.iata,
+                city: detail.airport.destination.position.region.city,
                 time: arrivalTime,
             },
             duration: {
