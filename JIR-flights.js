@@ -153,12 +153,14 @@ Module.register('JIR-flights', {
 
     extractFlighCode: function(payload){
         const self = this;
+        const now = moment();
         payload.forEach((event, id) => {
             let match = this.config.flightRegex.exec(event.title);
-            if(match != null){
-                Log.info(`${self.name}: ${match[1]}`);
+            const start = moment(parseInt(event.startDate));
+            const end = moment(parseInt(event.endDate));
+            if(now.isBetween(start, end) && (match != null)){
+                //Log.info(`${self.name}: ${match[1]}`);
                 self.config.flightCode=match[1];
-                self.sendSocketNotification('JIR-FLIGHTS_STARTED', self.config);
             }
         });
     },
@@ -190,7 +192,6 @@ Module.register('JIR-flights', {
         if (notification === 'JIR_FLIGHTS_STARTED'){
             this.sendSocketNotification(notification, payload);
         } else if (notification === 'JIR_FLIGHTS_WAKE_UP') {
-            Log.info("flight found it, must show module");
             this.processFlightInformation(payload);
         }else if (notification === 'JIR_FLIGHTS_NOT_FOUND'){
             Log.info("not found, must hide module");

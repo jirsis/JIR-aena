@@ -10,6 +10,7 @@ const flights = {
     findFlightsUrl: 'https://www.flightradar24.com/v1/search/web/find', 
     detailsFlightUrl: 'https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={fr24id}',
     helper: {},
+    interval: {},
 
     find: function(idFlight){
         return request.get({
@@ -120,29 +121,28 @@ const flights = {
 module.exports = NodeHelper.create({
 
     start: function() {
-        console.log(this.name + ' node_helper is started!');
+        console.log(`${this.name} node_helper is started!`);
     },
 
     updateFlightData: function(flight_config, node_helper){
         console.log('JIR-FLIGHTS updated: '+new Date());
-        console.log(flight_config);
-        flights.chain(flight_config.flightCode, node_helper)
-            .then(function(response){
-                node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
-                setInterval(function update(){  
-                    flights.chain(flight_config.flightCode, node_helper)
-                    .then(function(response){                    
-                        node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
-                    });
-                }, flight_config.updateInterval);
-            });
+        if(flight_config.flightCode){
+            flights.chain(flight_config.flightCode, node_helper)
+                .then(function(response){
+                    node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
+                    flights.interval = setInterval(function update(){  
+                        flights.chain(flight_config.flightCode, node_helper)
+                        .then(function(response){                    
+                            node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
+                        });
+                    }, flight_config.updateInterval);
+                });
+        }
     },
 
     socketNotificationReceived: function(notification, payload) {
         const flight_nodehelper = this;
-        console.log(payload);
         if ( notification === 'JIR-FLIGHTS_STARTED' ){
-
             setTimeout(this.updateFlightData, 
                 payload.initialLoadDelay, 
                 payload,
