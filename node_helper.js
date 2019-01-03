@@ -33,6 +33,19 @@ const flights = {
         }
     },
 
+    defineFlightName: function(number, callsign){
+        let name = [];
+        if(number != null){
+            name.push(number);
+        }
+
+        if(callsign != null){
+            name.push(callsign);
+        }
+
+        return name.join('/');
+    },
+
     magicMirrorDetail: function(response){
         const detail = JSON.parse(response);
 
@@ -43,9 +56,9 @@ const flights = {
         const localOffset = moment().tz(moment.tz.guess()).utcOffset();
         let departedTime = moment(start*1000).add(detail.airport.origin.timezone.offset, 's').subtract(localOffset, 'm').format('HH:mm');
         let arrivalTime = moment(end*1000).add(detail.airport.destination.timezone.offset, 's').subtract(localOffset, 'm').format('HH:mm');
-
+        
         const detailJson = {
-            flight: detail.identification.number.default+'/'+detail.identification.callsign,
+            flight: flights.defineFlightName(detail.identification.number.default, detail.identification.callsign),
             departure: {
                 airport: detail.airport.origin.code.iata,
                 city: detail.airport.origin.position.region.city,
@@ -98,10 +111,6 @@ const flights = {
         return progress;
     },
 
-    render: function(model){
-        return model;
-    },
-
     notFound: function(){
         console.log("not found breaker");
        // flights.helper.sendSocketNotification('JIR_FLIGHTS_NOT_FOUND', JSON.stringify({msg: "flight not found"}, null, 2));
@@ -112,8 +121,7 @@ const flights = {
         return flights
             .find(codeFlight)
             .then(this.detail)
-            .then(this.magicMirrorDetail)
-            .then(this.render);
+            .then(this.magicMirrorDetail);
     }
 
     
@@ -127,6 +135,7 @@ module.exports = NodeHelper.create({
     updateFlightData: function(flight_config, node_helper){
         console.log('JIR-FLIGHTS updated: '+new Date());
         if(flight_config.flightCode){
+            console.log(`JIR-FLIGHTS updated flight: ${flight_config.flightCode}`);
             flights.chain(flight_config.flightCode, node_helper)
                 .then(function(response){
                     node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
@@ -140,13 +149,23 @@ module.exports = NodeHelper.create({
         }
     },
 
+    clearFlights: function(node_helper){
+        console.log(flights.interval);
+        clearInterval(flights.interval);
+        console.log(flights.interval);
+        node_helper.sendSocketNotification('JIR-FLIGHTS_FINISHED', {flight: "finished"});
+    },
+
     socketNotificationReceived: function(notification, payload) {
         const flight_nodehelper = this;
+        console.log(`notification: ${notification}`);
         if ( notification === 'JIR-FLIGHTS_STARTED' ){
             setTimeout(this.updateFlightData, 
                 payload.initialLoadDelay, 
                 payload,
                 flight_nodehelper);     
+        }else if(notification === 'JIR-FLIGHTS_FINISHED'){
+            this.clearFlights(flight_nodehelper);      
         }
     }
 });
