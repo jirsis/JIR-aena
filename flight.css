@@ -1,0 +1,47 @@
+.align-center {
+    text-align: center;
+}
+
+progress[value] {
+    -webkit-appearance: none;
+    width: 350px;
+    height: 5px;
+}
+
+progress[value]::-webkit-progress-bar {
+    background-color:lightgreen;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+
+progress[value]::-webkit-progress-value {
+    background-color: black;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+
+div.plane {
+    height: 0px;
+    top: 16px;
+    position: relative;
+    color: white;
+}
+
+td.duration {
+    height: 55px;
+}
+
+.blink {
+    animation: blink-animation 2s steps(5, start) infinite;
+    -webkit-animation: blink-animation 2s steps(5, start) infinite;
+}
+@keyframes blink-animation {
+    to {
+      visibility: hidden;
+    }
+}
+@-webkit-keyframes blink-animation {
+    to {
+      visibility: hidden;
+    }
+}
