@@ -1,26 +1,26 @@
 {
-  "name": "JIR-aena",
-  "version": "0.1.0",
-  "description": "MagicMirror module that show flights information with AENA source",
-  "main": "JIR-aena.js",
+  "name": "JIR-flights",
+  "version": "1.0",
+  "description": "MagicMirror module that show flights information from FlightRadar24 source",
+  "main": "JIR-flights.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jirsis/JIR-aena.git"
+    "url": "git+https://github.com/jirsis/JIR-flights.git"
   },
   "keywords": [
     "MagicMirror2",
     "module",
-    "aena"
+    "flight"
   ],
   "author": "J. Ignacio Reta Sabarrós",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/jirsis/JIR-aena/issues"
+    "url": "https://github.com/jirsis/JIR-fligths/issues"
   },
-  "homepage": "https://github.com/jirsis/JIR-aena#readme",
+  "homepage": "https://github.com/jirsis/JIR-flights#readme",
   "dependencies": {
     "momentjs": "^2.0.0",
     "request-debug": "^0.2.0",
