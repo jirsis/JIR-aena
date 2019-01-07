@@ -13,6 +13,7 @@ Module.register('JIR-flights', {
         updateInterval: 3*60*1000, //every 3m 
 
         flightRegex: /\[(.*)\]/s,
+        showModuleExtraTime: 5*60*1000, // show info 5 minutes more
 
     },
 
@@ -32,8 +33,6 @@ Module.register('JIR-flights', {
 
     start: function(){
         Log.log('Starting module: ' + this.name);
-        this.socketNotificationReceived('JIR-FLIGHTS_STARTED', this.config);
-        this.scheduleUpdate(this.config.initialLoadDelay);
         this.loaded = false;
     },
 
@@ -41,6 +40,15 @@ Module.register('JIR-flights', {
         this.flight = JSON.parse(flightData);
         this.show(this.config.animationSpeed, {lockString:this.identifier});
         this.loaded=true;
+        this.updateDom(this.config.animationSpeed);
+    },
+
+    finishFlight: function(){
+        Log.info("flight landing...")
+        this.config.flightCode=null;
+        this.flight = {};
+        this.show(this.config.animationSpeed, {lockString:this.identifier});
+        this.loaded=false;
         this.updateDom(this.config.animationSpeed);
     },
 
@@ -120,7 +128,12 @@ Module.register('JIR-flights', {
         plane.className='plane';
         plane.style=`width:${this.flight.duration.progress*2}%`;
         let planeIcon = document.createElement('i');
-        planeIcon.className='fas fa-plane plane';
+        if(this.flight.duration.progress > 99){
+            planeIcon.className='fas fa-plane plane blink';
+        }else{
+            planeIcon.className='fas fa-plane plane';
+        }
+        
         plane.appendChild(planeIcon);
 
         progress.setAttribute('max', '100');
@@ -146,55 +159,46 @@ Module.register('JIR-flights', {
     },
     
     flightsNotLoaded: function(wrapper){
-        wrapper.innerHTML = this.name + ' '+this.translate('LOADING');
-        wrapper.className = 'dimmed light small';
+        // wrapper.innerHTML = this.name + ' '+this.translate('LOADING');
+        // wrapper.className = 'dimmed light small';
 		return wrapper;
     },
 
     extractFlighCode: function(payload){
         const self = this;
         const now = moment();
-        payload.forEach((event, id) => {
+        self.config.flightCode=null;
+        payload.forEach((event) => {
             let match = this.config.flightRegex.exec(event.title);
             const start = moment(parseInt(event.startDate));
             const end = moment(parseInt(event.endDate));
             if(now.isBetween(start, end) && (match != null)){
-                //Log.info(`${self.name}: ${match[1]}`);
+                Log.info(`${self.name}: ${match[1]} -> JIR-FLIGHTS_START`);
                 self.config.flightCode=match[1];
+                this.sendSocketNotification('JIR-FLIGHTS_START', self.config);
             }
         });
     },
-
-    scheduleUpdate: function(delay) {
-		var nextLoad = this.config.updateInterval;
-		if (typeof delay !== 'undefined' && delay >= 0) {
-			nextLoad = delay;
-		}
-		var self = this;
-		setTimeout(function() {
-            self.sendSocketNotification('JIR-FLIGHTS_STARTED', self.config);
-			self.scheduleUpdate();
-		}, nextLoad);
-	},
 
     showError: function(errorDescription){
         this.error = errorDescription;
     },
 
     notificationReceived: function(notification, payload, sender){
+        Log.info(`${this.name} received a module notification: ${notification}`);
         if (notification === 'CALENDAR_EVENTS'){
             this.extractFlighCode(payload);
         }
     },
 
     socketNotificationReceived: function (notification, payload) {
-        //Log.info('notification recived '+notification);
-        if (notification === 'JIR_FLIGHTS_STARTED'){
+        Log.info('notification recived '+notification);
+        if (notification === 'JIR-FLIGHTS_STARTED'){
             this.sendSocketNotification(notification, payload);
-        } else if (notification === 'JIR_FLIGHTS_WAKE_UP') {
+        } else if (notification === 'JIR-FLIGHTS_UPDATED') {
             this.processFlightInformation(payload);
-        }else if (notification === 'JIR_FLIGHTS_NOT_FOUND'){
-            Log.info("not found, must hide module");
+        }else if (notification === 'JIR-FLIGHTS_ARRIVED'){
+            this.finishFlight(payload);
         }
     },
 });
