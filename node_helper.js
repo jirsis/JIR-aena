@@ -4,13 +4,13 @@ const moment = require('moment');
 const timezone = require('moment-timezone');
 //require('request-debug')(request);
 
-
-
 const flights = {
     findFlightsUrl: 'https://www.flightradar24.com/v1/search/web/find', 
     detailsFlightUrl: 'https://data-live.flightradar24.com/clickhandler/?version=1.5&flight={fr24id}',
     helper: {},
     interval: {},
+
+    departure: false,
 
     find: function(idFlight){
         return request.get({
@@ -31,19 +31,6 @@ const flights = {
         }else{
             return Promise.reject("flight not found");
         }
-    },
-
-    defineFlightName: function(number, callsign){
-        let name = [];
-        if(number != null){
-            name.push(number);
-        }
-
-        if(callsign != null){
-            name.push(callsign);
-        }
-
-        return name.join('/');
     },
 
     magicMirrorDetail: function(response){
@@ -72,10 +59,21 @@ const flights = {
             duration: {
                 total: `${durationFlight.get('hours').toString().padStart(2, '0')}h ${durationFlight.get('minutes').toString().padStart(2, '0')}m`,
                 progress: flights.getProgress(start, total, detail.trail[0].ts),
-            }
+            },
+            updated: moment(),
         }
-       // console.log(JSON.stringify(detailJson, null, 2));
         return detailJson;
+    },
+
+    defineFlightName: function(number, callsign){
+        let name = [];
+        if(number != null){
+            name.push(number);
+        }
+        if(callsign != null){
+            name.push(callsign);
+        }
+        return name.join('/');
     },
 
     getTime: function(scheduled, estimated, real){
@@ -113,9 +111,14 @@ const flights = {
 
     notFound: function(){
         console.log("not found breaker");
-       // flights.helper.sendSocketNotification('JIR_FLIGHTS_NOT_FOUND', JSON.stringify({msg: "flight not found"}, null, 2));
     },
 
+    flightArrived: function(helper){
+        flights.departure=false;
+        clearInterval(flights.interval);
+        helper.sendSocketNotification('JIR-FLIGHTS_ARRIVED');
+    },
+      
     chain: function(codeFlight, flights_node_helper){
         this.helper = flights_node_helper;
         return flights
@@ -123,49 +126,54 @@ const flights = {
             .then(this.detail)
             .then(this.magicMirrorDetail);
     }
-
-    
 };
+
 module.exports = NodeHelper.create({
 
     start: function() {
         console.log(`${this.name} node_helper is started!`);
     },
 
-    updateFlightData: function(flight_config, node_helper){
-        console.log('JIR-FLIGHTS updated: '+new Date());
-        if(flight_config.flightCode){
-            console.log(`JIR-FLIGHTS updated flight: ${flight_config.flightCode}`);
-            flights.chain(flight_config.flightCode, node_helper)
-                .then(function(response){
-                    node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
-                    flights.interval = setInterval(function update(){  
-                        flights.chain(flight_config.flightCode, node_helper)
-                        .then(function(response){                    
-                            node_helper.sendSocketNotification('JIR_FLIGHTS_WAKE_UP', JSON.stringify(response, null, 2));
+    updateFlightData: (flight_config, node_helper) => {
+        console.log(`JIR-FLIGHTS updated flight: ${flight_config.flightCode}`);
+        flights
+            .chain(flight_config.flightCode, node_helper)
+            .then((response) => {
+                const json = JSON.stringify(response, null, 2);
+                node_helper.sendSocketNotification('JIR-FLIGHTS_UPDATED', json);
+                console.log(`JIR-FLIGHTS updated flight: ${flight_config.flightCode}`);
+                flights.interval = setInterval( () => {  
+                    flights
+                        .chain(flight_config.flightCode, node_helper)
+                        .then((response) => {
+                            console.log(`progress: ${response.duration.progress}`);
+                            if(response.duration.progress < 100){
+                                console.log(`keep fliying normal ${flight_config.flightCode}`);
+                                node_helper.sendSocketNotification('JIR-FLIGHTS_UPDATED', JSON.stringify(response, null, 2));
+                            }else{
+                                console.log(`landing...`);
+                                flights.flightArrived(node_helper);
+                            }
                         });
-                    }, flight_config.updateInterval);
-                });
-        }
-    },
-
-    clearFlights: function(node_helper){
-        console.log(flights.interval);
-        clearInterval(flights.interval);
-        console.log(flights.interval);
-        node_helper.sendSocketNotification('JIR-FLIGHTS_FINISHED', {flight: "finished"});
+                }, flight_config.updateInterval);
+            });
     },
 
     socketNotificationReceived: function(notification, payload) {
         const flight_nodehelper = this;
-        console.log(`notification: ${notification}`);
-        if ( notification === 'JIR-FLIGHTS_STARTED' ){
-            setTimeout(this.updateFlightData, 
-                payload.initialLoadDelay, 
-                payload,
-                flight_nodehelper);     
-        }else if(notification === 'JIR-FLIGHTS_FINISHED'){
-            this.clearFlights(flight_nodehelper);      
+        console.log(`notification received: ${notification}`);
+        if ( notification === 'JIR-FLIGHTS_START' ){
+            console.log(`flight departed? ${flights.departure}`);
+            if(!flights.departure){
+                console.log(`notification processed ${notification}`);
+                flights.departure=true;
+                setTimeout(this.updateFlightData, 
+                    payload.initialLoadDelay, 
+                    payload,
+                    flight_nodehelper);     
+            }else{
+                console.log(`ignored notification ${notification}`);
+            }
         }
-    }
+    },
 });
